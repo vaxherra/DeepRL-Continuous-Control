@@ -196,17 +196,25 @@ class ReplayBuffer:
         """Initialize a ReplayBuffer object.
         Params
         ======
+            device (torch.device): device to store the tensors
+            action_size (int): dimension of each action
             buffer_size (int): maximum size of buffer
             batch_size (int): size of each training batch
+            seed (int): random seed
         """
-        self.DEVICE = device
 
+        # Store parameters
+        self.DEVICE = device
         self.action_size = action_size
-        self.memory = deque(maxlen=buffer_size)  # internal memory (deque)
         self.batch_size = batch_size
-        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
         self.seed = random.seed(seed)
-    
+
+        # Initialize memory
+        self.memory = deque(maxlen=buffer_size)  # internal memory (deque)
+
+        # Define experience tuple
+        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
+
     def add(self, state, action, reward, next_state, done):
         """Add a new experience to memory."""        
         e = self.experience(state, action, reward, next_state, done)
