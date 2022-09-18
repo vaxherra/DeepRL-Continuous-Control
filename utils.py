@@ -57,7 +57,7 @@ def ddpg_train(agent: Agent, env: UnityEnvironment, n_episodes=2000, max_t=1000,
         scores_window.append(np.mean(score))                         # save the average score for the last 100 episodes
 
         if episode % print_every == 0:
-            logging.info('\rEpisode: \t{} \tScore: \t{:.2f} \tAverage Score: \t{:.2f}'.format(episode, np.mean(score), np.mean(scores_window)), end="")
+            logging.info('\rEpisode: \t{} \tScore: \t{:.2f} \tAverage Score: \t{:.2f}'.format(episode, np.mean(score), np.mean(scores_window)))
 
         if np.mean(scores_window) >= 30.0:
             logging.info('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(episode, np.mean(scores_window)))
