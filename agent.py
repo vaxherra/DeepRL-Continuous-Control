@@ -3,59 +3,84 @@ import random
 import copy
 import os
 from collections import namedtuple, deque
-
+import logging
 from model import Actor, Critic
 
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-class Agent():        
-    def __init__(self, 
-        device,
-        state_size, n_agents, action_size, random_seed,
-        buffer_size, batch_size, gamma, TAU, lr_actor, lr_critic, weight_decay,
-        checkpoint_folder = './'):        
+class Agent:
+    """Interacts with and learns from the environment."""
+    def __init__(self,
+                 device, state_size, n_agents, action_size, random_seed,
+                 buffer_size, batch_size, gamma, tau, lr_actor, lr_critic, weight_decay,
+                 checkpoint_folder = './', restore = False):
+        """
+        Initialize an Agent object.
 
+        Params
+        ======
+            device (torch.device): cpu or cuda
+            state_size (int): dimension of each state
+            n_agents (int): number of agents
+            action_size (int): dimension of each action
+            random_seed (int): random seed
+            buffer_size (int): replay buffer size
+            batch_size (int): minibatch size
+            gamma (float): discount factor
+            TAU (float): for soft update of target parameters
+            lr_actor (float): learning rate of the actor
+            lr_critic (float): learning rate of the critic
+            weight_decay (float): L2 weight decay
+            checkpoint_folder (string): folder to save checkpoints
+            restore (bool): restore from checkpoint
+        """
+
+        # Store parameters
         self.DEVICE = device
-
         self.state_size = state_size
         self.n_agents = n_agents
         self.action_size = action_size
         self.seed = random.seed(random_seed)
 
-        # Hyperparameters
+        # Store model Hyperparameters
         self.BUFFER_SIZE = buffer_size
         self.BATCH_SIZE = batch_size
         self.GAMMA = gamma
-        self.TAU = TAU
+        self.TAU = tau
         self.LR_ACTOR = lr_actor
         self.LR_CRITIC = lr_critic
         self.WEIGHT_DECAY = weight_decay
 
+        # Store checkpoint folder
         self.CHECKPOINT_FOLDER = checkpoint_folder
 
-        # Actor Network (w/ Target Network)
+        # Initialize Actor Network (w/ Target Network)
         self.actor_local = Actor(state_size, action_size, random_seed).to(self.DEVICE)
         self.actor_target = Actor(state_size, action_size, random_seed).to(self.DEVICE)
         self.actor_optimizer = optim.Adam(self.actor_local.parameters(), lr=self.LR_ACTOR)
 
-        # Critic Network (w/ Target Network)
+        # Initialize Critic Network (w/ Target Network)
         self.critic_local = Critic(state_size, action_size, random_seed).to(self.DEVICE)
         self.critic_target = Critic(state_size, action_size, random_seed).to(self.DEVICE)
         self.critic_optimizer = optim.Adam(self.critic_local.parameters(), lr=self.LR_CRITIC, weight_decay=self.WEIGHT_DECAY)
 
-        if os.path.isfile(self.CHECKPOINT_FOLDER + 'checkpoint_actor.pth') and os.path.isfile(self.CHECKPOINT_FOLDER + 'checkpoint_critic.pth'):
-            self.actor_local.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_actor.pth'))
-            self.actor_target.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_actor.pth'))
+        if restore:
+            if os.path.isfile(self.CHECKPOINT_FOLDER + 'checkpoint_actor.pth') and os.path.isfile(self.CHECKPOINT_FOLDER + 'checkpoint_critic.pth'):
+                logging.info("Restoring from checkpoint")
+                self.actor_local.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_actor.pth'))
+                self.actor_target.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_actor.pth'))
 
-            self.critic_local.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_critic.pth'))
-            self.critic_target.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_critic.pth'))
+                self.critic_local.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_critic.pth'))
+                self.critic_target.load_state_dict(torch.load(self.CHECKPOINT_FOLDER + 'checkpoint_critic.pth'))
+            else:
+                logging.info("No checkpoint found, initializing from scratch")
 
-        # Noise process
+        # Initialize Noise process
         self.noise = OUNoise((n_agents, action_size), random_seed)
 
-        # Replay memory
+        # Initialize Replay memory
         self.memory = ReplayBuffer(device, action_size, self.BUFFER_SIZE, self.BATCH_SIZE, random_seed)
     
     def step(self, state, action, reward, next_state, done):
