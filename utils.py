@@ -8,7 +8,7 @@ import logging
 from matplotlib import pyplot as plt
 
 
-def ddpg_train(agent: Agent, env: UnityEnvironment, n_episodes=2000, max_t=1000, print_every=100) -> List[float]:
+def ddpg_train(agent: Agent, env: UnityEnvironment, n_episodes=2000, max_t=1000, print_every=100, min_mean_score=30) -> List[float]:
     """
     Train the agent using DDPG algorithm with the given environment.
 
@@ -17,6 +17,7 @@ def ddpg_train(agent: Agent, env: UnityEnvironment, n_episodes=2000, max_t=1000,
     :param n_episodes: Number of episodes to train the agent,
     :param max_t: Maximum number of time steps per episode
     :param print_every: Print the average score every print_every episode
+    :param min_mean_score: Minimum mean score to stop the training
 
     :return: List of scores
     """
@@ -59,7 +60,7 @@ def ddpg_train(agent: Agent, env: UnityEnvironment, n_episodes=2000, max_t=1000,
         if episode % print_every == 0:
             logging.info('\rEpisode: \t{} \tScore: \t{:.2f} \tAverage Score: \t{:.2f}'.format(episode, np.mean(score), np.mean(scores_window)))
 
-        if np.mean(scores_window) >= 30.0:
+        if np.mean(scores_window) >= min_mean_score:
             logging.info('\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}'.format(episode, np.mean(scores_window)))
             break
 
