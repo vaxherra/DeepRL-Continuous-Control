@@ -163,6 +163,9 @@ class Agent:
             target_param.data.copy_(tau*local_param.data + (1.0-tau)*target_param.data)
 
     def checkpoint(self):
+        """Save model weights to checkpoint
+        Saves the actor and critic weights to the checkpoint folder.
+        """
         torch.save(self.actor_local.state_dict(), self.CHECKPOINT_FOLDER + 'checkpoint_actor.pth')      
         torch.save(self.critic_local.state_dict(), self.CHECKPOINT_FOLDER + 'checkpoint_critic.pth')  
 
